@@ -807,6 +807,292 @@ export class FormComponent {}
 </form>
 ```
 
-C
+C'est tout pour la mise en place de l'interface utilisateur avec Angular ! Vous pouvez bien sûr personnaliser davantage les styles, la mise en page, les validations du formulaire, etc. selon vos besoins.
 
-'est tout pour la mise en place de l'interface utilisateur avec Angular ! Vous pouvez bien sûr personnaliser davantage les styles, la mise en page, les validations du formulaire, etc. selon vos besoins.
+<!-- stockage local du carousel -->
+
+Pour réaliser un stockage local des éléments insérés dynamiquement sur une page web dans Angular, vous pouvez utiliser le mécanisme de stockage local fourni par le navigateur, appelé Web Storage. Web Storage vous permet de stocker des données sous la forme de paires clé-valeur dans le navigateur du client. Il existe deux types de stockage local dans Web Storage : `localStorage` et `sessionStorage`.
+
+`localStorage` persiste les données de manière permanente dans le navigateur, même après la fermeture de la fenêtre ou du navigateur. Cependant, cela signifie que les données stockées dans `localStorage` peuvent être accessibles entre différentes sessions et onglets.
+
+`sessionStorage`, d'autre part, stocke les données pour une session spécifique du navigateur. Les données seront disponibles tant que la fenêtre ou l'onglet est ouvert. Une fois que l'utilisateur ferme la fenêtre ou l'onglet, les données sont effacées.
+
+Pour utiliser `localStorage` dans Angular, voici les étapes à suivre :
+
+Étape 1 : Installer Angular LocalStorage Package (optionnel)
+Vous pouvez utiliser la bibliothèque `angular-webstorage-service` pour simplifier l'utilisation de `localStorage`. Pour l'installer, exécutez la commande suivante dans votre projet Angular :
+
+```bash
+npm install angular-webstorage-service
+```
+
+Étape 2 : Importer le LocalStorageService
+Dans le module où vous souhaitez utiliser le stockage local, importez le `LocalStorageService` depuis `angular-webstorage-service`.
+
+```typescript
+// app.module.ts
+
+import { NgModule } from '@angular/core';
+import { LocalStorageService } from 'angular-webstorage-service';
+
+@NgModule({
+  // ...
+  providers: [LocalStorageService],
+  // ...
+})
+export class AppModule { }
+```
+
+Étape 3 : Utiliser le LocalStorageService
+Maintenant, vous pouvez utiliser le `LocalStorageService` dans vos composants pour stocker et récupérer des données dans `localStorage`.
+
+Supposons que vous ayez un tableau `carousels` contenant les carousels dynamiquement insérés dans votre composant. Pour stocker ces carousels dans `localStorage`, vous pouvez faire ce qui suit :
+
+```typescript
+// carousel.component.ts
+
+import { Component, Input, OnInit } from '@angular/core';
+import { Carousel } from '../models';
+import { LocalStorageService } from 'angular-webstorage-service';
+
+@Component({
+  selector: 'app-carousel',
+  templateUrl: './carousel.component.html',
+})
+export class CarouselComponent implements OnInit {
+  @Input() carousel: Carousel;
+
+  constructor(private storage: LocalStorageService) {}
+
+  ngOnInit(): void {
+    this.saveToLocalStorage();
+  }
+
+  saveToLocalStorage(): void {
+    const savedCarousels = this.storage.get('savedCarousels') || [];
+    savedCarousels.push(this.carousel);
+    this.storage.set('savedCarousels', savedCarousels);
+  }
+}
+```
+
+Dans cet exemple, le composant `CarouselComponent` utilise `LocalStorageService` pour enregistrer chaque carousel ajouté dans `localStorage` lors de l'initialisation. Les carousels sont stockés sous la clé `'savedCarousels'`. Vous pouvez utiliser une clé différente selon vos besoins.
+
+Étape 4 : Récupérer les données depuis `localStorage` lors du rafraîchissement
+Pour récupérer les données stockées depuis `localStorage` lors du rafraîchissement de la page, vous pouvez le faire dans le composant principal (par exemple, `app.component.ts`) en utilisant le `LocalStorageService` de la même manière que dans l'étape 3 :
+
+```typescript
+// app.component.ts
+
+import { Component } from '@angular/core';
+import { LocalStorageService } from 'angular-webstorage-service';
+import { Carousel } from './models';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+})
+export class AppComponent {
+  savedCarousels: Carousel[] = [];
+
+  constructor(private storage: LocalStorageService) {
+    this.savedCarousels = this.storage.get('savedCarousels') || [];
+  }
+}
+```
+
+Dans cet exemple, nous avons récupéré les carousels sauvegardés dans `localStorage` et les avons stockés dans la propriété `savedCarousels` du composant principal.
+
+Cela devrait permettre de stocker localement les éléments insérés dynamiquement sur la page web et de les conserver même après le rafraîchissement de la page.
+
+Pour sauvegarder localement les messages de l'utilisateur et du chatbot même après un rafraîchissement total de la page web, nous pouvons utiliser le stockage local de navigateur, tel que `localStorage`. Cela nous permettra de stocker les messages dans le navigateur et de les récupérer lorsqu'une nouvelle session est démarrée.
+
+Voici comment vous pouvez mettre à jour le code du composant `ChatboxComponent` pour prendre en charge le stockage local :
+
+1. Mise à jour du fichier `chatbox.component.ts` :
+
+```typescript
+// chatbox.component.ts
+
+import { Component, OnInit } from '@angular/core';
+import { DialogflowService } from 'angular-dialogflow-bot';
+
+@Component({
+  selector: 'app-chatbox',
+  templateUrl: './chatbox.component.html',
+  styleUrls: ['./chatbox.component.css']
+})
+export class ChatboxComponent implements OnInit {
+  incomingMessages: string[] = [];
+  outgoingMessages: string[] = [];
+  userMessage: string = '';
+
+  constructor(private dialogflowService: DialogflowService) {}
+
+  ngOnInit() {
+    this.loadMessagesFromLocalStorage();
+  }
+
+  sendMessage() {
+    if (this.userMessage.trim() !== '') {
+      this.outgoingMessages.push(this.userMessage);
+      this.userMessage = '';
+
+      this.saveMessagesToLocalStorage();
+
+      this.dialogflowService.getResponse(this.outgoingMessages[this.outgoingMessages.length - 1]).subscribe((response: any) => {
+        const botResponse = response.result.fulfillment?.speech;
+        if (botResponse) {
+          this.incomingMessages.push(botResponse);
+        } else {
+          this.incomingMessages.push("Désolé, je suis un chatbot et je ne peux pas répondre à cela pour le moment.");
+        }
+
+        this.saveMessagesToLocalStorage();
+      });
+    }
+  }
+
+  private loadMessagesFromLocalStorage() {
+    const incomingMessages = localStorage.getItem('incomingMessages');
+    const outgoingMessages = localStorage.getItem('outgoingMessages');
+
+    if (incomingMessages) {
+      this.incomingMessages = JSON.parse(incomingMessages);
+    }
+
+    if (outgoingMessages) {
+      this.outgoingMessages = JSON.parse(outgoingMessages);
+    }
+  }
+
+  private saveMessagesToLocalStorage() {
+    localStorage.setItem('incomingMessages', JSON.stringify(this.incomingMessages));
+    localStorage.setItem('outgoingMessages', JSON.stringify(this.outgoingMessages));
+  }
+}
+```
+
+Dans ce code, nous utilisons `localStorage` pour sauvegarder et récupérer les messages de l'utilisateur et du chatbot. La méthode `loadMessagesFromLocalStorage()` est appelée dans `ngOnInit()` pour charger les messages depuis le stockage local au démarrage du composant. Les méthodes `sendMessage()` et `saveMessagesToLocalStorage()` sont utilisées pour sauvegarder les messages chaque fois qu'un nouveau message est envoyé ou reçu.
+
+De cette manière, les messages seront stockés localement dans le navigateur, et même après un rafraîchissement total de la page web, les messages seront récupérés et affichés dans le chat. Notez que le stockage local du navigateur est spécifique à chaque navigateur et domaine, ce qui signifie que les messages seront disponibles dans la même instance du navigateur et pour le même domaine. Si vous souhaitez synchroniser les messages entre plusieurs appareils ou sessions, vous devrez envisager d'utiliser une solution de stockage de données plus avancée, telle qu'un serveur backend ou une base de données en ligne.
+
+Bien sûr ! Pour ajouter les boutons "Previous" et "Next" au carousel, nous allons utiliser le CSS pour créer une interface conviviale. Voici le code CSS que vous pouvez ajouter au composant `carousel.component.css` :
+
+```css
+/* carousel.component.css */
+
+/* Styles pour le container du carousel */
+.carousel-container {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Styles pour les images du carousel */
+.carousel-img {
+  width: 100%;
+  display: inline-block;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Styles pour les boutons "Previous" et "Next" */
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 20px;
+  text-align: center;
+  line-height: 40px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  z-index: 1;
+}
+
+.carousel-btn:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.carousel-btn.previous {
+  left: 10px;
+}
+
+.carousel-btn.next {
+  right: 10px;
+}
+```
+
+Maintenant, pour utiliser ce CSS dans le composant `carousel.component.html`, vous pouvez l'adapter comme suit :
+
+```html
+<!-- carousel.component.html -->
+
+<div class="carousel-container">
+  <div *ngFor="let image of carousel.images" class="carousel-img">
+    <img [src]="image.imageUrl" alt="Image {{ image.id }}" />
+  </div>
+</div>
+
+<!-- Boutons Previous et Next -->
+<button class="carousel-btn previous" (click)="previousSlide">&#8249;</button>
+<button class="carousel-btn next" (click)="nextSlide">&#8250;</button>
+```
+
+Assurez-vous d'avoir également implémenté les fonctions `previousSlide()` et `nextSlide()` dans votre fichier `carousel.component.ts`. Ces fonctions doivent être responsables de faire défiler le carousel vers la gauche et la droite respectivement.
+
+Avec ce CSS et les boutons ajoutés, votre carousel devrait avoir un aspect amélioré avec des boutons de navigation "Previous" et "Next". Vous pouvez ajuster les styles selon vos préférences pour les adapter au thème de votre site.
+
+Bien sûr ! Pour implémenter les fonctions `previousSlide()` et `nextSlide()` dans le `carousel.component.ts`, nous aurons besoin de garder une trace de l'index de l'image actuellement affichée dans le carousel. Voici comment vous pouvez le faire :
+
+```typescript
+// carousel.component.ts
+
+import { Component, Input } from '@angular/core';
+import { Carousel } from '../models';
+import { LocalStorageService } from 'angular-webstorage-service';
+
+@Component({
+  selector: 'app-carousel',
+  templateUrl: './carousel.component.html',
+  styleUrls: ['./carousel.component.css']
+})
+export class CarouselComponent {
+  @Input() carousel: Carousel;
+  currentIndex = 0;
+
+  constructor(private storage: LocalStorageService) {}
+
+  previousSlide(): void {
+    this.currentIndex = (this.currentIndex - 1 + this.carousel.images.length) % this.carousel.images.length;
+  }
+
+  nextSlide(): void {
+    this.currentIndex = (this.currentIndex + 1) % this.carousel.images.length;
+  }
+}
+```
+
+Dans ce code, nous avons ajouté une propriété `currentIndex` qui représente l'index de l'image actuellement affichée dans le carousel. Les fonctions `previousSlide()` et `nextSlide()` mettent à jour cet index pour déterminer quelle image afficher ensuite. La formule `(this.currentIndex + 1) % this.carousel.images.length` permet de faire défiler circulairement le carousel, c'est-à-dire que lorsque l'index atteint la fin de la liste, il revient au début.
+
+Assurez-vous également d'appeler ces fonctions depuis les boutons "Previous" et "Next" dans le `carousel.component.html` :
+
+```html
+<!-- carousel.component.html -->
+
+<div class="carousel-container">
+  <div *ngFor="let image of carousel.images; let i = index" class="carousel-img" [style.transform]="i === currentIndex ? 'translateX(0)' : 'translateX(-100%)'">
+    <img [src]="image.imageUrl" alt="Image {{ image.id }}" />
+  </div>
+</div>
+
+<!-- Boutons Previous et Next -->
+<button class="carousel-btn previous" (click)="previousSlide">&#8249;</button>
+<button class="carousel-btn next" (click)="nextSlide">&#8250;</button>
+```
+
+Dans cette mise à jour, nous utilisons la propriété `currentIndex` pour appliquer un style conditionnel à chaque image du carousel. L'image avec l'index actuel sera affichée avec `translateX(0)` (position initiale), tandis que les autres images seront déplacées vers la gauche avec `translateX(-100%)` pour les cacher.
+
+Avec ces modifications, le carousel devrait maintenant faire défiler les images vers la gauche et la droite lorsque vous cliquez sur les boutons "Previous" et "Next".
