@@ -1096,3 +1096,263 @@ Assurez-vous également d'appeler ces fonctions depuis les boutons "Previous" et
 Dans cette mise à jour, nous utilisons la propriété `currentIndex` pour appliquer un style conditionnel à chaque image du carousel. L'image avec l'index actuel sera affichée avec `translateX(0)` (position initiale), tandis que les autres images seront déplacées vers la gauche avec `translateX(-100%)` pour les cacher.
 
 Avec ces modifications, le carousel devrait maintenant faire défiler les images vers la gauche et la droite lorsque vous cliquez sur les boutons "Previous" et "Next".
+
+<!-- code détaillé -->
+
+Bien sûr, vous pouvez créer un fichier `mock.ts` pour contenir les données simulées (mock data) utilisées dans le service `DataService`. De cette façon, vous pouvez garder les données séparées du service, ce qui rendra le code plus modulaire et facile à gérer.
+
+Voici comment vous pouvez organiser vos fichiers :
+
+1. `mock.ts`: Contient les données simulées pour les catégories, les thèmes, les carousels et les images.
+
+```typescript
+// mock.ts
+
+import { Category, Theme, Carousel, Image } from './models';
+
+export const categories: Category[] = [
+  { id: 1, name: 'Catégorie 1' },
+  { id: 2, name: 'Catégorie 2' },
+  // Ajoutez les autres catégories ici
+];
+
+export const themes: Theme[] = [
+  { id: 1, name: 'Thème 1', categoryId: 1 },
+  { id: 2, name: 'Thème 2', categoryId: 1 },
+  // Ajoutez les autres thèmes ici
+];
+
+export const carousels: Carousel[] = [
+  {
+    id: 1,
+    name: 'Carousel 1',
+    images: [
+      { id: 1, imageUrl: 'chemin/image1.jpg' },
+      { id: 2, imageUrl: 'chemin/image2.jpg' },
+      { id: 3, imageUrl: 'chemin/image3.jpg' },
+    ],
+  },
+  // Ajoutez les autres carousels ici
+];
+```
+
+2. `data.service.ts`: Utilise les données du fichier `mock.ts` pour fournir les informations.
+
+```typescript
+// data.service.ts
+
+import { Injectable } from '@angular/core';
+import { Category, Theme, Carousel, Image } from './models';
+import { categories, themes, carousels } from './mock';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class DataService {
+  getCategories(): Category[] {
+    return categories;
+  }
+
+  getThemesByCategoryId(categoryId: number): Theme[] {
+    return themes.filter((theme) => theme.categoryId === categoryId);
+  }
+
+  getCarousels(): Carousel[] {
+    return carousels;
+  }
+}
+```
+
+De cette façon, vous pouvez simplement importer les tableaux de données depuis `mock.ts` dans le service `DataService` et les utiliser pour fournir les informations nécessaires. Cela rend le code plus modulaire et facilite également la maintenance des données simulées.
+
+<!-- combinaison -->
+
+D'accord, voici le code TypeScript mis à jour pour `carousel.component.ts`, `data.service.ts` et les autres composants associés :
+
+1. `carousel.component.ts` :
+
+```typescript
+// carousel.component.ts
+
+import { Component, Input } from '@angular/core';
+import { Carousel } from '../models';
+import { LocalStorageService } from 'angular-webstorage-service';
+
+@Component({
+  selector: 'app-carousel',
+  templateUrl: './carousel.component.html',
+  styleUrls: ['./carousel.component.css'],
+})
+export class CarouselComponent {
+  @Input() carousel: Carousel;
+  currentIndex = 0;
+
+  constructor(private storage: LocalStorageService) {}
+
+  previousSlide(): void {
+    this.currentIndex = (this.currentIndex - 1 + this.carousel.images.length) % this.carousel.images.length;
+  }
+
+  nextSlide(): void {
+    this.currentIndex = (this.currentIndex + 1) % this.carousel.images.length;
+  }
+}
+```
+
+2. `data.service.ts` :
+
+```typescript
+// data.service.ts
+
+import { Injectable } from '@angular/core';
+import { Category, Theme, Carousel, Image } from './models';
+import { categories, themes, carousels } from './mock';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class DataService {
+  getCategories(): Category[] {
+    return categories;
+  }
+
+  getThemesByCategoryId(categoryId: number): Theme[] {
+    return themes.filter((theme) => theme.categoryId === categoryId);
+  }
+
+  getCarousels(): Carousel[] {
+    return carousels;
+  }
+}
+```
+
+3. `mock.ts` :
+
+```typescript
+// mock.ts
+
+import { Category, Theme, Carousel, Image } from './models';
+
+export const categories: Category[] = [
+  { id: 1, name: 'Catégorie 1' },
+  { id: 2, name: 'Catégorie 2' },
+  // Ajoutez les autres catégories ici
+];
+
+export const themes: Theme[] = [
+  { id: 1, name: 'Thème 1', categoryId: 1 },
+  { id: 2, name: 'Thème 2', categoryId: 1 },
+  // Ajoutez les autres thèmes ici
+];
+
+export const carousels: Carousel[] = [
+  {
+    id: 1,
+    name: 'Carousel 1',
+    images: [
+      { id: 1, imageUrl: 'chemin/image1.jpg' },
+      { id: 2, imageUrl: 'chemin/image2.jpg' },
+      { id: 3, imageUrl: 'chemin/image3.jpg' },
+    ],
+  },
+  // Ajoutez les autres carousels ici
+];
+```
+
+Assurez-vous également que les autres composants utilisent les données du `DataService` correctement et que les fichiers de modèles (`models.ts`) sont définis correctement avec les interfaces `Category`, `Theme`, `Carousel` et `Image`.
+
+Ces mises à jour permettent de séparer les données simulées dans `mock.ts` et le service `DataService` se charge de fournir ces données aux composants qui en ont besoin. Le carousel affiche désormais les images en utilisant les boutons "Previous" et "Next" pour faire défiler les images.
+
+Bien sûr ! Pour ajouter un deuxième objet de carousel avec un nouvel ID, un nouveau nom de carousel et un nouveau tableau d'images dans le fichier `mock.ts`, voici comment cela peut être fait :
+
+```typescript
+// mock.ts
+
+import { Category, Theme, Carousel, Image } from './models';
+
+export const categories: Category[] = [
+  { id: 1, name: 'Catégorie 1' },
+  { id: 2, name: 'Catégorie 2' },
+  // Ajoutez les autres catégories ici
+];
+
+export const themes: Theme[] = [
+  { id: 1, name: 'Thème 1', categoryId: 1 },
+  { id: 2, name: 'Thème 2', categoryId: 1 },
+  // Ajoutez les autres thèmes ici
+];
+
+export const carousels: Carousel[] = [
+  {
+    id: 1,
+    name: 'Carousel 1',
+    images: [
+      { id: 1, imageUrl: 'chemin/image1.jpg' },
+      { id: 2, imageUrl: 'chemin/image2.jpg' },
+      { id: 3, imageUrl: 'chemin/image3.jpg' },
+    ],
+  },
+  {
+    id: 2,
+    name: 'Carousel 2',
+    images: [
+      { id: 4, imageUrl: 'chemin/image4.jpg' },
+      { id: 5, imageUrl: 'chemin/image5.jpg' },
+      { id: 6, imageUrl: 'chemin/image6.jpg' },
+    ],
+  },
+  // Ajoutez les autres carousels ici
+];
+```
+
+Maintenant, pour utiliser ces deux carousels dans votre code TypeScript et HTML, vous pouvez les afficher dans `carousel.component.ts` comme suit :
+
+```typescript
+// carousel.component.ts
+
+import { Component, Input } from '@angular/core';
+import { Carousel } from '../models';
+import { LocalStorageService } from 'angular-webstorage-service';
+
+@Component({
+  selector: 'app-carousel',
+  templateUrl: './carousel.component.html',
+  styleUrls: ['./carousel.component.css'],
+})
+export class CarouselComponent {
+  @Input() carousel: Carousel;
+  currentIndex = 0;
+
+  constructor(private storage: LocalStorageService) {}
+
+  previousSlide(): void {
+    this.currentIndex = (this.currentIndex - 1 + this.carousel.images.length) % this.carousel.images.length;
+  }
+
+  nextSlide(): void {
+    this.currentIndex = (this.currentIndex + 1) % this.carousel.images.length;
+  }
+}
+```
+
+```html
+<!-- carousel.component.html -->
+
+<div class="carousel-container">
+  <div *ngFor="let image of carousel.images; let i = index" class="carousel-img" [style.transform]="i === currentIndex ? 'translateX(0)' : 'translateX(-100%)'">
+    <img [src]="image.imageUrl" alt="Image {{ image.id }}" />
+  </div>
+</div>
+
+<!-- Boutons Previous et Next -->
+<button class="carousel-btn previous" (click)="previousSlide">&#8249;</button>
+<button class="carousel-btn next" (click)="nextSlide">&#8250;</button>
+```
+
+Maintenant, si vous utilisez le composant `CarouselComponent` dans un autre composant, vous pouvez lui passer les carousels du `mock.ts` comme suit :
+
+```html
+<app-carousel *ngFor="let carousel of carousels" [carousel]="carousel"></app-carousel>
+```
+
+Assurez-vous d'importer correctement les interfaces et les objets du `mock.ts` dans vos fichiers pour éviter toute erreur. Avec ces modifications, le carousel affichera maintenant les images de chaque carousel et vous pourrez naviguer entre les différents carousels à l'aide des boutons "Previous" et "Next".
